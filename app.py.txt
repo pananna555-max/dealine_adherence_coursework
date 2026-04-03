@@ -1,0 +1,173 @@
+import# ---------------- CONFIG ----------------json
+from   datetime
+importre
+
+# ---------------- CONFIG ----------------
+stset_page_config(page_title"Deadline Behavior Survey"layout=)
+
+# ---------------- DATA ----------------
+version_float= 
+
+questions  [
+    {"q""How often do you complete tasks before the deadline?"
+     : [(,5"Often"4),(,),("Rarely"2"Never",)]},
+
+    {: ,
+"opts""Always",),(,4"Sometimes"3),(,),(,1
+
+    {    percent = (score / max_score) * 100: "Do you delay important tasks?"    if percent >= 85:
+        return "Highly Organized Performer""opts"    elif percent >= 70:"Never"        return "Consistent Planner"5    elif percent >= 55:"Sometimes"        return "Moderate Procrastinator"3    elif percent >= 40:"Often"        return "Deadline-Driven Worker"1    elif percent >= 25:
+
+    {: ,
+"opts""Always"1),(,),(,),(,)]},
+
+    {: "Do you plan your schedule in advance?"
+"opts": [(,5"Sometimes"3"Rarely"1
+
+"q""How well do you manage your time?",
+     "opts""Very well"5"Well"4"Average"3"Poorly"1)]},
+
+"q""Do you use to-do lists?",
+     : [("Always"5"Sometimes",),(,)]},
+
+    {: "Do you underestimate time needed?"
+"opts""Always"1"Often",),(,3        st.markdown("## ? Results")"Rarely"        st.write("Total Score:", total_score)4        st.write("Psychological State:", result)
+
+        # SAVE FILE"q"        record = {"Do distractions affect you?"            "name": name,
+            "surname": surname,"opts"            "dob": dob,"Frequently"            "student_id": sid,1            "score": total_score,"Sometimes"            "state": result,3            "answers": answers,"Rarely"            "version": version_float4        }
+
+        json_data = json.dumps(record, indent=2)"q":         st.download_button(,
+     : [(,),(,3),("Very stressed",1)]},
+
+    {"q": "Do you feel guilty when delaying tasks?",
+     "opts": [("Never",5),("Sometimes",3),("Often",1)]},
+
+    {"q": "Do you work better under pressure?",
+     "opts": [("Yes",4),("Sometimes",3),("No",1)]},
+
+    {"q": "Do you avoid difficult tasks?",
+     "opts": [("Often",1),("Sometimes",3),("Rarely",5)]},
+
+    {"q": "Do you lose motivation during tasks?",
+     "opts": [("Often",1),("Sometimes",3),("Rarely",5)]},
+
+    {"q": "How often do you submit work late?",
+     "opts": [("Never",5),("Rarely",4),("Sometimes",2),("Often",1)]},
+
+    {"q": "When do you complete tasks?",
+     "opts": [("Early",5),("Before deadline",3),("Last minute",1)]},
+
+    {"q": "Do you prefer steady work or bursts?",
+     "opts": [("Steady",5),("Mixed",3),("Last-minute",1)]},
+
+    {"q": "How satisfied are you with productivity?",
+     "opts": [("Very satisfied",5),("Satisfied",4),("Neutral",3),("Unsatisfied",1)]},
+]
+
+# ---------------- STATES ----------------
+def classify(score, max_score):
+    percent = (score / max_score) * 100
+
+    if percent >= 85:
+        return "Highly Organized Performer"
+    elif percent >= 70:
+        return "Consistent Planner"
+    elif percent >= 55:
+        return "Moderate Procrastinator"
+    elif percent >= 40:
+        return "Deadline-Driven Worker"
+    elif percent >= 25:
+        return "Chronic Procrastinator"
+    else:
+        return "Avoidant / Overwhelmed"
+
+# ---------------- VALIDATION ----------------
+def validate_name(name):
+    return bool(re.match(r"^[A-Za-z\s'-]+$", name))
+
+def validate_dob(dob):
+    try:
+        date = datetime.strptime(dob, "%Y-%m-%d")
+        return date <= datetime.now()
+    except:
+        return False
+
+def validate_student_id(sid):
+    return sid.isdigit()
+
+# ---------------- UI ----------------
+st.title("?? Deadline Adherence & Productivity Survey")
+
+st.markdown("Fill in your details and complete the questionnaire.")
+
+# USER INPUT
+name = st.text_input("Given Name")
+surname = st.text_input("Surname")
+dob = st.text_input("Date of Birth (YYYY-MM-DD)")
+sid = st.text_input("Student ID")
+
+# VALIDATION BUTTON
+if st.button("Start Survey"):
+
+    errors = []
+
+    if not validate_name(name):
+        errors.append("Invalid name (only letters, spaces, hyphens, apostrophes allowed)")
+    if not validate_name(surname):
+        errors.append("Invalid surname")
+    if not validate_dob(dob):
+        errors.append("Invalid date format (YYYY-MM-DD)")
+    if not validate_student_id(sid):
+        errors.append("Student ID must be digits only")
+
+    if errors:
+        for e in errors:
+            st.error(e)
+
+    else:
+        st.success("Data is valid. Please answer the questions.")
+
+        total_score = 0
+        answers = []
+
+        for i, q in enumerate(questions):
+            options = [opt[0] for opt in q["opts"]]
+            choice = st.selectbox(f"Q{i+1}. {q['q']}", options, key=i)
+
+            score = next(s for text, s in q["opts"] if text == choice)
+            total_score += score
+
+            answers.append({
+                "question": q["q"],
+                "answer": choice,
+                "score": score
+            })
+
+        max_score = sum(max(o[1] for o in q["opts"]) for q in questions)
+        result = classify(total_score, max_score)
+
+        st.markdown("## ? Results")
+        st.write("Total Score:", total_score)
+        st.write("Psychological State:", result)
+
+        # SAVE FILE
+        record = {
+            "name": name,
+            "surname": surname,
+            "dob": dob,
+            "student_id": sid,
+            "score": total_score,
+            "state": result,
+            "answers": answers,
+            "version": version_float
+        }
+
+        json_data = json.dumps(record, indent=2)
+
+        st.download_button(
+            label="Download Results (JSON)",
+            data=json_data,
+            file_name=f"{sid}_results.json",
+            mime="application/json"
+        )
+
